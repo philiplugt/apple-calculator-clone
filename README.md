@@ -2,7 +2,11 @@
 
 This project is an attempt to clone the Apple Mac OSX calculator app. It was done with the intention to practice and improve my web programming skills. 
 
-<img width="600" alt="apple_calculator_clone" src="https://github.com/pxv8780/apple-calculator-clone/assets/22942635/014c693b-87d9-4dc5-835c-caf5a878cbc1">
+<div align="center">
+    <img width="600" alt="apple_calculator_clone" src="https://github.com/pxv8780/apple-calculator-clone/assets/22942635/014c693b-87d9-4dc5-835c-caf5a878cbc1">
+    <p><sup>Clone and original calculator side by side</sup></p>
+    <br>
+</div>
 
 ### Versioning
 Successfully tested and run on Firefox and Safari (2023-12-16)
