@@ -2,9 +2,10 @@
 
 This project is an attempt to clone the Apple Mac OSX calculator app. It was done with the intention to practice and improve my web programming skills. 
 
+<img width="600" alt="apple_calculator_clone" src="https://github.com/pxv8780/apple-calculator-clone/assets/22942635/014c693b-87d9-4dc5-835c-caf5a878cbc1">
+
 ### Versioning
 Successfully tested and run on Firefox and Safari (2023-12-16)
-
 
 ### How to use
 Download all files to a folder of your choosing, and run `calculator.html` in your browser.
@@ -27,7 +28,7 @@ Basides the calculator logic. I tried to faithfully copy the calculator as much 
 - The font is different, this project simply used Arial
 - The number on the display does not decrease in font size as the maximum width is reached, it overflows instead
 - No keyboard shortcuts have been implemented
-
+- The original calculator has a slightly transparent and blurred background
 
 ### Sources and useful links
 
