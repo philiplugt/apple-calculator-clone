@@ -25,7 +25,7 @@ Something reminded me of Computational Theory, Automata, and FSM (Finite State M
 
 In fact as it turns out there are **major** discrepancies between the Apple IOS calculator and Apple OSX calculator. While the OSX calculator as many useful features like Scientific and Programmer modes, the IOS calculator seems to have more stable logic regarding basic calculations, though it is hard to determine without access to Apple's source code or designers. For example, something like IOS `2 + 5 * ± 3 =` will equate to `2 + 5 * -3` and yield `-13` as an answer. While on OSX `2 + 5 * ± 3 =` yields `-10`, presumably because the expression it ignores the 2 and equates to `5 * -3 + 5` 
 
-Basides the calculator logic. I tried to faithfully copy the calculator as much as I could. For the watchful eye you will notice some subtle differences, such as:
+Besides the calculator logic. I tried to faithfully copy the calculator as much as I could. For the watchful eye, you will notice some subtle differences, such as:
 
 - Only the basic calculator is implemented, so no advanced features
 - Floating point errors are not dealt because I use `parseFloat` to quickly convert between strings and numbers. So, annoyingly, expressions like `8.075 - 6 = 2.0749999999999993` instead of `2.075`
