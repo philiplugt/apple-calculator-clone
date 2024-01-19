@@ -47,6 +47,7 @@ class Calculator {
 		this.displayPane = displayPane;
 		this.clearButton = clearButton;
 		this.#defaultInputs(); // Method allows for reset later
+		this.error = false;
 	}
 
 	#defaultInputs() {
@@ -57,6 +58,7 @@ class Calculator {
 		this.operator2 = "+";
 		this.z = "0";
 		this.display = Display.X;
+		this.startNewOperand = false;
 	}
 
 	output() {
@@ -79,7 +81,7 @@ class Calculator {
 	print() {
 		console.log(
 			Object.keys(State)[this.state], " [", this.x, this.operator1,
-			this.y, this.operator2,this.z, "], DISPLAY ", this.displayPane.textContent
+			this.y, this.operator2, this.z, "], DISPLAY ", this.displayPane.textContent
 		);
 	}
 
@@ -88,7 +90,14 @@ class Calculator {
 		case "+": return (parseFloat(a) + parseFloat(b)).toString(); break;
 		case "-": return (parseFloat(a) - parseFloat(b)).toString(); break;
 		case "*": return (parseFloat(a) * parseFloat(b)).toString(); break;
-		case "/": return (parseFloat(a) / parseFloat(b)).toString(); break;
+		case "/": 
+			if (parseFloat(b) !== 0) {
+				return (parseFloat(a) / parseFloat(b)).toString(); 
+			} else {
+				this.error = true;
+				this.#defaultInputs();
+				return "Not a number";
+			}
 		}
 	}
 
@@ -96,15 +105,29 @@ class Calculator {
 		let delay = 60;
 		switch(action) {
 		case Action.NUM:
+			this.error = false;
 			this.handleNumberInput(value);
 			delay = 0;
 			break;
-		case Action.OPS: this.handleOperatorSimpleInput(value); break;
-		case Action.OPC: this.handleOperatorComplexInput(value); break;
-		case Action.EQL: this.handleEqualsInput(); break;
-		case Action.CLR: this.handleClearInput(); break;
-		case Action.NEG: this.handleNegationInput(); break;
-		case Action.PER: this.handlePercentInput(); break;
+		case Action.CLR: 
+			this.error = false;
+			this.handleClearInput(); 
+			break;
+		case Action.OPS:
+			if (this.error) { break; }
+			this.handleOperatorSimpleInput(value); break;
+		case Action.OPC:
+			if (this.error) { break; }
+			this.handleOperatorComplexInput(value); break;
+		case Action.EQL:
+			if (this.error) { break; }
+			this.handleEqualsInput(); break;
+		case Action.NEG:
+			if (this.error) { break; }
+			this.handleNegationInput(); break;
+		case Action.PER:
+			if (this.error) { break; }
+			this.handlePercentInput(); break;
 		}
 		
 		this.displayPane.textContent = "";
@@ -127,7 +150,13 @@ class Calculator {
 			this.x = this.updateOperand(this.x, value);
 			break;
 		case State.SET_X:
-			this.x = this.updateOperand(this.x, value);
+			if (this.startNewOperand) {
+				this.x = "0"
+				this.x = this.updateOperand(this.x, value);
+			} else {
+				this.x = this.updateOperand(this.x, value);
+			}
+			this.startNewOperand = false;
 			break;
 		case State.SET_OP1:
 			this.state = State.SET_Y;
@@ -136,7 +165,13 @@ class Calculator {
 			this.display = Display.Y;
 			break;
 		case State.SET_Y:
-			this.y = this.updateOperand(this.y, value);
+			if (this.startNewOperand) {
+				this.y = "0"
+				this.y = this.updateOperand(this.y, value);
+			} else {
+				this.y = this.updateOperand(this.y, value);
+			}
+			this.startNewOperand = false;
 			break;
 		case State.SET_OP2:
 			this.state = State.SET_Z;
@@ -164,6 +199,7 @@ class Calculator {
 		case State.SET_Z:
 			this.y = this.evaluate(this.y, this.z, this.operator2);
 			this.x = this.evaluate(this.x, this.y, this.operator1);
+			this.y = this.x; // Change XX
 			this.state = State.SET_OP1;
 			this.operator1 = value;
 			this.display = Display.X;
@@ -188,9 +224,10 @@ class Calculator {
 		case State.SET_Y:
 			if ("*/".includes(this.operator1)) {
 				this.x = this.evaluate(this.x, this.y, this.operator1);
-				this.y = this.evaluate(this.x, this.y, this.operator1);
+				this.y = this.x
 				this.state = State.SET_OP1;
 				this.operator1 = value;
+				this.display = Display.X;
 			} else {
 				this.state = State.SET_OP2;
 				this.operator2 = value;
@@ -210,6 +247,7 @@ class Calculator {
 		case State.SET_X:
 		case State.SET_OP1:
 		case State.EQUAL:
+			this.y = this.x;
 			this.state = State.SET_OP1;
 			this.operator1 = value;
 			break;
@@ -224,9 +262,9 @@ class Calculator {
 			this.y = this.evaluate(this.y, this.z, this.operator2);
 			this.x = this.evaluate(this.x, this.y, this.operator1); // Using new y
 			break;
-		case State.SET_X:
-			this.y = "0";
-			this.x = this.evaluate(this.x, this.y, this.operator1);
+		case State.SET_X: break;
+			// this.y = "0"; # CHANGE_X
+			// this.x = this.evaluate(this.x, this.y, this.operator1);
 		default:
 			this.x = this.evaluate(this.x, this.y, this.operator1);
 			break;
@@ -248,9 +286,15 @@ class Calculator {
 			this.state = State.SET_X;
 			this.operator1 = "+";
 			this.y = "0";
+			this.startNewOperand = true;
 			break;
 		case State.SET_Y:
-			this.y = this.resetCalculation(this.y);
+			if (this.y === "0") {
+				this.#defaultInputs();
+			} else {
+				this.y = this.x
+				this.display = Display.ZERO;
+			}
 			break;
 		case State.SET_OP2: 
 			this.state = State.SET_Y;
@@ -298,13 +342,19 @@ class Calculator {
 	handlePercentInput() {
 		switch(this.state) {
 		case State.INITIAL: break;
-		case State.SET_X: this.x = this.makePercent(this.x); break;
+		case State.SET_X: 
+			this.x = this.makePercent(this.x);
+			this.startNewOperand = true;
+			break;
 		case State.SET_OP1:
 			this.state = State.SET_Y;
-			this.y = this.makePercent(this.y);
+			this.y = this.evaluate(this.x, this.makePercent(this.x), "*");
 			this.display = Display.Y;
 			break;
-		case State.SET_Y: this.y = this.makePercent(this.y); break;
+		case State.SET_Y: 
+			this.y = this.evaluate(this.x, this.makePercent(this.y), "*");
+			this.startNewOperand = true;
+			break;
 		case State.SET_OP2:
 			this.state = State.SET_Z;
 			this.z = this.makePercent(this.z);
@@ -333,9 +383,13 @@ class Calculator {
 	}
 
 	formatForOutput(value) {
-		let [whole, fraction] = value.split(".");
-		whole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-		return (fraction ? whole + "." + fraction : whole);
+		if (value.includes(".")) {
+			let [whole, fraction] = value.split(".");
+			whole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+			return (fraction ? whole + "." + fraction : whole + ".");
+		} else {
+			return value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+		}
 	}
 
 	makeNegative(value) {
