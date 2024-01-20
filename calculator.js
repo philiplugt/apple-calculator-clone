@@ -38,7 +38,7 @@ calculatorButtons.forEach((button) => button.addEventListener("click", addButton
  * NEG - Input is negation, same as multiplying by -1
  * PER - Input is percent, same as dividing by 100
  */
-const State = { INITIAL: 0, SET_X: 1, SET_OP1: 2, SET_Y: 3, SET_OP2: 4, SET_Z: 5, EQUAL: 6};
+const State = { INITIAL: 0, SET_X: 1, SET_OP1: 2, SET_Y: 3, SET_OP2: 4, SET_Z: 5, EQUAL: 6 };
 const Action = { NUM: 0, OPS: 1, OPC: 2, EQL: 3, CLR: 4, NEG: 5, PER: 6};
 const Display = { X: 0, Y: 1, Z: 2, ZERO: 3};
 
@@ -59,6 +59,7 @@ class Calculator {
 		this.z = "0";
 		this.display = Display.X;
 		this.startNewOperand = false;
+		this.fromPercent = false;
 	}
 
 	output() {
@@ -180,7 +181,13 @@ class Calculator {
 			this.display = Display.Z;
 			break;
 		case State.SET_Z:
-			this.z = this.updateOperand(this.z, value);
+			if (this.startNewOperand) {
+				this.z = "0"
+				this.z = this.updateOperand(this.z, value);
+			} else {
+				this.z = this.updateOperand(this.z, value);
+			}
+			this.startNewOperand = false;
 			break;
 		case State.EQUAL:
 			this.state = State.SET_X;
@@ -195,7 +202,6 @@ class Calculator {
 	handleOperatorSimpleInput(value) {
 		switch(this.state) {
 		case State.SET_Y:
-		case State.SET_OP2:
 		case State.SET_Z:
 			this.y = this.evaluate(this.y, this.z, this.operator2);
 			this.x = this.evaluate(this.x, this.y, this.operator1);
@@ -203,6 +209,15 @@ class Calculator {
 			this.state = State.SET_OP1;
 			this.operator1 = value;
 			this.display = Display.X;
+			break;
+		case State.SET_OP2:
+			this.x = this.evaluate(this.x, this.y, this.operator1);
+			this.operator1 = value;
+			this.y = this.x;
+			this.operator2 = "+";
+			this.z = "0";
+			this.display = Display.X;
+			this.state = State.SET_OP1;
 			break;
 		case State.INITIAL:
 		case State.SET_X:
@@ -258,13 +273,42 @@ class Calculator {
 	handleEqualsInput() {
 		switch(this.state) {
 		case State.SET_OP2:
+			this.x = this.evaluate(this.x, this.y, this.operator2);
+			this.x = this.evaluate(this.x, this.y, this.operator1);
+			this.operator1 = this.operator2;
+			break;
 		case State.SET_Z:
-			this.y = this.evaluate(this.y, this.z, this.operator2);
-			this.x = this.evaluate(this.x, this.y, this.operator1); // Using new y
+			if (this.z === "0") {
+				this.x = this.evaluate(this.x, this.y, this.operator2);
+				this.x = this.evaluate(this.x, this.y, this.operator1);
+			} else {
+				this.y = this.evaluate(this.y, this.z, this.operator2);
+				this.x = this.evaluate(this.x, this.y, this.operator1); // Using new y
+				this.y = this.z;
+			}
+			this.z = "0";
+			this.operator1 = this.operator2;
+			this.operator2 = "+";
+			break;
+		case State.SET_Y:			
+			if (this.fromPercent) {
+				this.x = this.evaluate(this.x, this.y, this.operator1);
+				this.operator1 = this.operator2;
+				this.y = this.z;
+				this.operator2 = "+";
+				this.z = "0";
+			} else {
+				this.x = this.evaluate(this.x, this.y, this.operator1);
+				if (this.clearButton.textContent === "AC") {
+					this.z = "0";
+					this.operator2 = "+";
+					this.y = "0";
+					this.operator1 = "+";
+				}
+			}
+			this.fromPercent = false;
 			break;
 		case State.SET_X: break;
-			// this.y = "0"; # CHANGE_X
-			// this.x = this.evaluate(this.x, this.y, this.operator1);
 		default:
 			this.x = this.evaluate(this.x, this.y, this.operator1);
 			break;
@@ -275,12 +319,17 @@ class Calculator {
 
 	// If user clicked C or AC
 	handleClearInput() {
+		if (this.clearButton.textContent === "AC") {
+			this.#defaultInputs();
+			return;
+		}
+
 		switch(this.state) {
 		case State.INITIAL:
 			this.#defaultInputs();
 			break;
 		case State.SET_X:
-			this.x = this.resetCalculation(this.x);
+			this.x = "0";
 			break;
 		case State.SET_OP1:
 			this.state = State.SET_X;
@@ -289,27 +338,21 @@ class Calculator {
 			this.startNewOperand = true;
 			break;
 		case State.SET_Y:
-			if (this.y === "0") {
-				this.#defaultInputs();
-			} else {
-				this.y = this.x
-				this.display = Display.ZERO;
-			}
+			this.y = this.x
+			this.display = Display.ZERO;
 			break;
-		case State.SET_OP2: 
+		case State.SET_OP2:
 			this.state = State.SET_Y;
 			this.operator2 = "+";
+			this.startNewOperand = true;
 			break;
 		case State.SET_Z: 
-			this.z = this.resetCalculation(this.z);
+			this.z = "0";
 			break;
 		case State.EQUAL:
-			if (this.x !== "0") {
-				this.state = State.SET_X;
-				this.display = Display.ZERO;
-			} else {
-				this.#defaultInputs();
-			}
+			this.state = State.SET_X;
+			this.y = this.x;
+			this.display = Display.ZERO;
 			break;
 		}
 		this.clearButton.textContent = "AC";
@@ -319,7 +362,8 @@ class Calculator {
 	handleNegationInput() {
 		switch(this.state) {
 		case State.INITIAL: break;
-		case State.SET_X: this.x = this.makeNegative(this.x); break;
+		case State.SET_X: 
+			this.x = this.makeNegative(this.x); break;
 		case State.SET_OP1: 
 			this.state = State.SET_Y;
 			this.y = this.makeNegative(this.y);
@@ -327,9 +371,10 @@ class Calculator {
 			break;
 		case State.SET_Y: this.y = this.makeNegative(this.y); break;
 		case State.SET_OP2 : 
-			this.state = State.SET_Y;
-			this.y = this.makeNegative(this.y); 
-			this.display = State.SET_Y;
+			this.state = State.SET_Z;
+			this.z = this.makeNegative(this.y); 
+			this.display = Display.Z;
+			this.startNewOperand = true;
 			break;
 		case State.SET_Z: this.z = this.makeNegative(this.z);break;
 		case State.EQUAL: 
@@ -347,18 +392,29 @@ class Calculator {
 			this.startNewOperand = true;
 			break;
 		case State.SET_OP1:
+			if ("*/".includes(this.operator1)) {
+				this.y = this.makePercent(this.x);
+			} else {
+				this.y = this.evaluate(this.x, this.makePercent(this.x), "*");
+			}
 			this.state = State.SET_Y;
-			this.y = this.evaluate(this.x, this.makePercent(this.x), "*");
 			this.display = Display.Y;
 			break;
-		case State.SET_Y: 
-			this.y = this.evaluate(this.x, this.makePercent(this.y), "*");
-			this.startNewOperand = true;
+		case State.SET_Y:
+			if ("*/".includes(this.operator1)) {
+				this.y = this.makePercent(this.y);
+				this.startNewOperand = true;
+			} else {
+				this.y = this.evaluate(this.x, this.makePercent(this.y), "*");
+				this.startNewOperand = true;
+			}
 			break;
 		case State.SET_OP2:
-			this.state = State.SET_Z;
-			this.z = this.makePercent(this.z);
-			this.display = Display.Z; 
+			this.state = State.SET_Y;
+			this.z = this.makePercent(this.y);
+			this.display = Display.Z;
+			this.y = this.evaluate(this.y, this.makePercent(this.y), this.operator2);
+			this.fromPercent = true;
 			break;
 		case State.SET_Z: this.z = this.makePercent(this.z);break;
 		case State.EQUAL: this.x = this.makePercent(this.x); break;
@@ -373,13 +429,6 @@ class Calculator {
 			operand = operand === "0" ? value : operand + value;
 		}
 		return operand;
-	}
-
-	resetCalculation(operand) {
-		if (operand === "0") {
-			this.#defaultInputs();
-		}
-		return "0"
 	}
 
 	formatForOutput(value) {
