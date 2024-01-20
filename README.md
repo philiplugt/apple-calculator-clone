@@ -39,5 +39,5 @@ Besides the calculator logic, I tried to faithfully copy the calculator as much 
 
 ### Sources and useful links
 
-https://rvunabandi.medium.com/making-a-calculator-in-javascript-64193ea6a492
-https://fsharpforfunandprofit.com/posts/calculator-complete-v2/
+- https://rvunabandi.medium.com/making-a-calculator-in-javascript-64193ea6a492
+- https://fsharpforfunandprofit.com/posts/calculator-complete-v2/
